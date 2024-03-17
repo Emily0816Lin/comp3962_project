@@ -25,6 +25,32 @@ var params = {
 
 
 app.use(express.static(__dirname));
+
+// DynamoDB Operations: Read all Items for history page
+const readAllItems = async () => {
+    const params = {
+        TableName: "patient"
+    };
+
+    try {
+        const { Items = [] } = await docClient.scan(params).promise();
+        return { success: true, data: Items };
+    } catch (error) {
+        return { success: false, data: null };
+    }
+};
+
+// Read all Items
+app.get("/history/api/items", async (req, res) => {
+    const { success, data } = await readAllItems();
+
+    if (success) {
+        return res.json({ success, data });
+    }
+    return res.status(500).json({ success: false, message: "Error" });
+});
+
+
 app.get('/slots', (req, res) => {
     const date = req.query.date;
     const params = {

@@ -22,13 +22,29 @@
    
     <main>
         <h2>Previous Appointments:</h2>
-        <ul id="slotList">
-            <!-- Appointments will be populated here dynamically -->
+        <table id="historyTable" class="historyTable">
+            <thead>
+                <tr>
+                    <th>Apt.Date</th>
+                    <th>Apt.Time</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Appointments will be populated here dynamically -->
+            </tbody>
+        </table>
+
+        <ul id="detailsList">    
+            <!-- Details will be populated here dynamically -->
         </ul>
+
     </main>
     <footer>
         <p>&copy; 2024 E-Health Scheduler</p>
     </footer>
-    <script src="script.js"></script>
+
+    <script src="history.js"></script>
 </body>
 </html>

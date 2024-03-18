@@ -32,6 +32,7 @@ console.log("Formatted date:", formattedDate);
         timeSlotsContainer.innerHTML = ""; // Clear existing slots
 
         slots.forEach(function(slot) {
+            if(slot.Available === "yes"){
             var slotDiv = document.createElement("div");
             slotDiv.classList.add("form-group");
             var timeLabel = document.createElement("label");
@@ -44,6 +45,7 @@ console.log("Formatted date:", formattedDate);
             radioInput.value = slot.time;
             slotDiv.appendChild(radioInput);
             timeSlotsContainer.appendChild(slotDiv);
+            }
         });
     }
 

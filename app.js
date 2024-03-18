@@ -125,6 +125,64 @@ app.get('/', (req, res) => {
 //     }
 // });
 
+app.post('/bookAppointment', (req, res) => {
+    const { name, email, date, time } = req.body;
+
+    if (!name || !email || !date || !time) {
+        return res.status(400).json({ error: 'Name, email, date, and time are required' });
+    }
+
+    const params = {
+        TableName: 'patient',
+        Item: {
+            name: name,
+            email: email,
+            date: date,
+            doctorcomment: "", // Empty string for doctor comment
+            prescription: "", // Empty string for prescription
+            status: "coming", // Default status
+            time: time
+        }
+    };
+
+    docClient.put(params, (err, data) => {
+        if (err) {
+            console.error('Unable to add appointment to DynamoDB. Error JSON:', JSON.stringify(err, null, 2));
+            res.status(500).send('Internal Server Error');
+        } else {
+            console.log('Added appointment to DynamoDB:', JSON.stringify(data, null, 2));
+            // Update the availability of the selected time slot
+            const updateParams = {
+                TableName: 'appointment',
+                Key: {
+                    date: date,
+                    time: time
+                },
+                UpdateExpression: 'SET #available = :newValue',
+                ExpressionAttributeNames: {
+                    '#available': 'Available'
+                },
+                ExpressionAttributeValues: {
+                    ':newValue': 'no'
+                }
+            };
+
+            docClient.update(updateParams, (err, data) => {
+                if (err) {
+                    console.error('Error updating time slot availability:', err);
+                    // Handle error updating time slot availability
+                } else {
+                    console.log('Time slot availability updated:', data);
+                    // Time slot availability updated successfully
+                }
+            });
+
+            res.json({ success: true });
+
+        }
+    });
+});
+
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);
 });

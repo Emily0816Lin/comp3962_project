@@ -58,3 +58,45 @@ console.log("Formatted date:", formattedDate);
         
     });
 });
+
+async function submitForm(event) {
+    event.preventDefault();
+    
+    const formData = {
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        date: formatDate(document.getElementById("date").value), // Format the date
+        time: document.querySelector('input[name="time"]:checked').value
+    };
+    
+    const response = await fetch('/bookAppointment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+    });
+    
+    if (response.ok) {
+        const responseData = await response.json();
+        console.log(responseData);
+        alert('Appointment booked successfully!');
+        clearTimeSlots();
+        window.location.reload();
+    } else {
+        console.error('Error:', response.statusText);
+        alert('Error booking appointment');
+    }
+}
+
+function clearTimeSlots() {
+    var timeSlotsContainer = document.getElementById("time-slots");
+    timeSlotsContainer.innerHTML = ""; // Clear time slots container
+}
+
+function formatDate(selectedDate) {
+    const [year, month, day] = selectedDate.split('-');
+    return `${day}-${month}-${year}`; // Format the date as day-month-year
+}
+
+document.getElementById("appointmentForm").addEventListener("submit", submitForm);

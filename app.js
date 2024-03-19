@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require('express');
 var AWS = require("aws-sdk");
 const bodyParser = require('body-parser');
+const nodemailer = require('nodemailer');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -17,6 +18,9 @@ let awsConfig = {
 
 AWS.config.update(awsConfig);
 let docClient = new AWS.DynamoDB.DocumentClient();
+
+// Create a new SES object
+const ses = new AWS.SES({ apiVersion: "2010-12-01" });
 
 var params = {
     TableName: "appointment",
@@ -83,49 +87,9 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/home.html');
 });
 
-// app.get('/help', (req, res) => {
-//     res.sendFile(__dirname + '/help.html');
-// });
-
-// app.get('/main', (req, res) => {
-//     res.sendFile(__dirname + '/main.html');
-// });
-
-// app.post('/addTodo', (req, res) => {
-//     const newTodo = req.body.newTodo;
-
-//     if (!newTodo) {
-//         return res.status(400).json({ error: 'New todo is required' });
-//     }
-
-//     const params = {
-//         TableName: 'ToDoList',
-//         Item: {
-//             Task: newTodo
-//         }
-//     };
-
-//     docClient.put(params, (err, data) => {
-//         if (err) {
-//             console.error('Unable to add item to DynamoDB. Error JSON:', JSON.stringify(err, null, 2));
-//             res.status(500).send('Internal Server Error');
-//         } else {
-//             console.log('Added item to DynamoDB:', JSON.stringify(data, null, 2));
-//             res.json({ success: true });
-//         }
-//     });
-// });
 
 
-// docClient.scan(params, function(err, data) {
-//     if (err) {
-//         console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-//     } else {
-//         console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
-//     }
-// });
-
-app.post('/bookAppointment', (req, res) => {
+app.post('/bookAppointment', async (req, res) => {
     const { name, email, date, time } = req.body;
 
     if (!name || !email || !date || !time) {
@@ -145,42 +109,58 @@ app.post('/bookAppointment', (req, res) => {
         }
     };
 
-    docClient.put(params, (err, data) => {
-        if (err) {
-            console.error('Unable to add appointment to DynamoDB. Error JSON:', JSON.stringify(err, null, 2));
-            res.status(500).send('Internal Server Error');
-        } else {
-            console.log('Added appointment to DynamoDB:', JSON.stringify(data, null, 2));
-            // Update the availability of the selected time slot
-            const updateParams = {
-                TableName: 'appointment',
-                Key: {
-                    date: date,
-                    time: time
+    try {
+        await docClient.put(params).promise();
+
+        console.log('Added appointment to DynamoDB');
+
+        // Update the availability of the selected time slot
+        const updateParams = {
+            TableName: 'appointment',
+            Key: {
+                date: date,
+                time: time
+            },
+            UpdateExpression: 'SET #available = :newValue',
+            ExpressionAttributeNames: {
+                '#available': 'Available'
+            },
+            ExpressionAttributeValues: {
+                ':newValue': 'no'
+            }
+        };
+
+        await docClient.update(updateParams).promise();
+
+        console.log('Time slot availability updated');
+
+        // Send email notification
+        const emailParams = {
+            Destination: {
+                ToAddresses: [email] // recipient email address
+            },
+            Message: {
+                Body: {
+                    Text: {
+                        Data: `Hello ${name}, your appointment for ${date} at ${time} has been booked successfully.`
+                    }
                 },
-                UpdateExpression: 'SET #available = :newValue',
-                ExpressionAttributeNames: {
-                    '#available': 'Available'
-                },
-                ExpressionAttributeValues: {
-                    ':newValue': 'no'
+                Subject: {
+                    Data: 'Appointment Confirmation'
                 }
-            };
+            },
+            Source: 'eschedulerapp@gmail.com' // sender email address
+        };
 
-            docClient.update(updateParams, (err, data) => {
-                if (err) {
-                    console.error('Error updating time slot availability:', err);
-                    // Handle error updating time slot availability
-                } else {
-                    console.log('Time slot availability updated:', data);
-                    // Time slot availability updated successfully
-                }
-            });
+        await ses.sendEmail(emailParams).promise();
 
-            res.json({ success: true });
+        console.log('Email notification sent');
 
-        }
-    });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
 });
 
 app.listen(port, () => {

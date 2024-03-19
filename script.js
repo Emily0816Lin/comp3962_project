@@ -80,7 +80,9 @@ async function submitForm(event) {
     if (response.ok) {
         const responseData = await response.json();
         console.log(responseData);
-        alert('Appointment booked successfully!');
+        alert('Appointment booked successfully! Check your email for confirmation.');
+        // sendNotification(formData.email, formData.name, formData.date, formData.time); // Send notification
+
         clearTimeSlots();
         window.location.reload();
     } else {
@@ -100,3 +102,5 @@ function formatDate(selectedDate) {
 }
 
 document.getElementById("appointmentForm").addEventListener("submit", submitForm);
+
+

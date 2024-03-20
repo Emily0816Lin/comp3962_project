@@ -121,6 +121,7 @@ function showPatientInfo(item) {
 
 
 function showItemDetails(item) {
+    document.getElementById('searchContainer').style.display = 'none'; // Hide the search bar
     document.getElementById('historyTable').style.display = 'none';
     const detailsList = document.getElementById('detailsList');
     detailsList.style.display = 'block';
@@ -174,8 +175,6 @@ function showItemDetails(item) {
         }
         return li;
     }
-
-    
 
     // Non-editable fields
     detailsList.appendChild(createListItem('Appointment Date', 'date'));

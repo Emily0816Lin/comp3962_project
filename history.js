@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Fetch all items from the API
-// Fetch all items from the API
 function readAllItems() {
     fetch('/history/api/items')
         .then(response => response.json())
@@ -26,6 +25,14 @@ function readAllItems() {
                 const statusSpan = document.createElement('span');
                 statusSpan.textContent = item.status;
                 statusSpan.className = 'statusStyle'; // Assign a class for styling
+
+                // Apply specific class based on the status value
+                if (item.status.toLowerCase() === 'completed') {
+                    statusSpan.classList.add('statusCompleted');
+                } else if (item.status.toLowerCase() === 'coming') {
+                    statusSpan.classList.add('statusComing');
+                }   
+                
                 statusCell.appendChild(statusSpan);
                 row.appendChild(statusCell);
                 
@@ -47,86 +54,63 @@ function readAllItems() {
 
 
 // Show details of a specific item
+// Show details of a specific item
 function showItemDetails(item) {
-    document.getElementById('historyTable').style.display = 'none'; // Hide the table
+    const historyTable = document.getElementById('historyTable');
     const detailsList = document.getElementById('detailsList');
-    detailsList.style.display = 'block'; // Make the details list visible
-    detailsList.className = 'detailsList'; // Apply styles from the CSS class
-    detailsList.innerHTML = ''; // Clear current details
 
-    // Add title to the list
-    const title = document.createElement('h3');
-    title.textContent = 'Appointment Details';
-    detailsList.appendChild(title);
-
-    // Function to create a separator
-    function createSeparator() {
-        const separator = document.createElement('div');
-        separator.className = 'separator'; // Apply styles from the CSS class
-        return separator;
+    // Function to toggle display and content
+    function toggleDisplay(element, display, className = '', innerHTML = '') {
+        element.style.display = display;
+        if (className) element.className = className;
+        if (innerHTML !== undefined) element.innerHTML = innerHTML;
     }
 
-    // Populate details list with information from the item
-    const dateLi = document.createElement('li');
-    dateLi.textContent = `Appointment Date: ${item.date}`;
-    detailsList.appendChild(dateLi);
+    // Function to create and append elements
+    function createElementAndAppend(type, parent, content, className = '') {
+        const element = document.createElement(type);
+        if (content) element.textContent = content;
+        if (className) element.className = className;
+        parent.appendChild(element);
+        return element;
+    }
 
-    const timeLi = document.createElement('li');
-    timeLi.textContent = `Appointment Time: ${item.time}`;
-    detailsList.appendChild(timeLi);
+    // Hide the table and show the details list
+    toggleDisplay(historyTable, 'none');
+    toggleDisplay(detailsList, 'block', 'detailsList');
 
-    // Add a separator line after time
-    detailsList.appendChild(createSeparator());
+    // Add title
+    createElementAndAppend('h3', detailsList, 'Appointment Details');
 
-    const patientLi = document.createElement('li');
-    patientLi.textContent = `Patient: ${item.name}`;
-    detailsList.appendChild(patientLi);
+    // Populate details list
+    const details = [
+        `Appointment Date: ${item.date}`,
+        `Appointment Time: ${item.time}`,
+        '',
+        `Patient: ${item.name}`,
+        `Contact: ${item.email}`,
+        '',
+        `Doctor: doctor name here`,
+        `Department: department name here`,
+        `Doctor's Comment: ${item.doctorcomment}`,
+        '',
+        `Prescription: ${item.prescription}`,
+        '',
+        `Status: ${item.status}`,
+    ];
 
-    const patientEmailLi = document.createElement('li');
-    patientEmailLi.textContent = `Contact: ${item.email}`;
-    detailsList.appendChild(patientEmailLi);
+    details.forEach(detail => {
+        if (detail === '') {
+            createElementAndAppend('div', detailsList, null, 'separator');
+        } else {
+            createElementAndAppend('li', detailsList, detail);
+        }
+    });
 
-    // Add a separator line after time
-    detailsList.appendChild(createSeparator());
-
-    const doctorLi = document.createElement('li');
-    doctorLi.textContent = `Doctor: doctor name here`;
-    detailsList.appendChild(doctorLi);
-    
-    const departmentLi = document.createElement('li');
-    departmentLi.textContent = `Department: department name here`;
-    detailsList.appendChild(departmentLi);
-
-    const doctorcommentLi = document.createElement('li');
-    doctorcommentLi.textContent = `Doctor's Comment: ${item.doctorcomment}`;
-    detailsList.appendChild(doctorcommentLi);
-
-    // Add a separator line after time
-    detailsList.appendChild(createSeparator());
-
-    const prescriptionLi = document.createElement('li');
-    prescriptionLi.textContent = `Prescription: ${item.prescription}`;
-    detailsList.appendChild(prescriptionLi);
-
-    // Add a separator line after time
-    detailsList.appendChild(createSeparator());
-    
-    const statusLi = document.createElement('li');
-    statusLi.textContent = `Status: ${item.status}`;
-    detailsList.appendChild(statusLi);
-
-    // Add a break or space before the Go Back button
-    // detailsList.appendChild(document.createElement('br')); // Adds a line break
-
-    // Add a Go Back button
-    const goBackButton = document.createElement('button');
-    goBackButton.textContent = 'Go Back';
-    goBackButton.className = 'goBackButton'; // Apply styles from the CSS class
+    // Add Go Back button
+    const goBackButton = createElementAndAppend('button', detailsList, 'Go Back', 'goBackButton');
     goBackButton.onclick = () => {
-        document.getElementById('historyTable').style.display = ''; // Show the table again
-        detailsList.innerHTML = ''; // Clear the details list
-        detailsList.className = ''; // Remove the box style
+        toggleDisplay(historyTable, '');
+        toggleDisplay(detailsList, '', '', '');
     };
-
-    detailsList.appendChild(goBackButton);
 }

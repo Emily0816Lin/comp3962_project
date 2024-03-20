@@ -22,10 +22,17 @@
     </header>
    
     <main>
-        <h2>Previous Appointments:</h2>
+        <h2>Doctor Dashboard: </h2>
+
+        <div id="searchContainer">
+            <input type="text" id="searchInput" placeholder="Search by patient name...">
+            <button id="searchButton">Search</button>
+        </div>
+
         <table id="historyTable" class="historyTable">
             <thead>
                 <tr>
+                    <th>Name</th>
                     <th>Apt.Date</th>
                     <th>Apt.Time</th>
                     <th>Status</th>
@@ -37,6 +44,10 @@
             </tbody>
         </table>
 
+        <ul id="patientInfo">    
+            <!-- patient Info will be populated here dynamically -->
+        </ul>
+
         <ul id="detailsList">    
             <!-- Details will be populated here dynamically -->
         </ul>
@@ -46,6 +57,6 @@
         <p>&copy; 2024 E-Health Scheduler</p>
     </footer>
 
-    <script src="history.js"></script>
+    <script src="docdashboard.js"></script>
 </body>
 </html>

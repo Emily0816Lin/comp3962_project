@@ -26,11 +26,10 @@ const ses = new AWS.SES({ apiVersion: "2010-12-01" });
 // Create a new CognitoIdentityServiceProvider object
 const cognito = new AWS.CognitoIdentityServiceProvider();
 
-var params = {
-    TableName: "appointment",
+// var params = {
+//     TableName: "appointment",
     
-};
-
+// };
 
 app.use(express.static(__dirname));
 
@@ -48,6 +47,40 @@ const readAllItems = async () => {
     }
 };
 
+// Update Items
+const updateItem = async (data = {}) => {
+    console.log('data:', data);
+    console.log('item name:', data.name);
+    console.log('item email:', data.email);
+
+    const params = {
+        TableName: 'patient',
+        Key: {
+            name: data.name,
+            email: data.email
+        },
+        UpdateExpression: 'SET #doctorcomment = :newDoctorComment, #prescription = :newPrescription, #status = :newStatus',
+        ExpressionAttributeNames: {
+            '#doctorcomment': 'doctorcomment',
+            '#prescription': 'prescription',
+            '#status': 'status'
+        },
+        ExpressionAttributeValues: {
+            ':newDoctorComment': data.doctorcomment,
+            ':newPrescription': data.prescription,
+            ':newStatus': data.status
+        }
+    };
+
+    try {
+        const response = await docClient.update(params).promise();
+        return { success: true, item: response.Attributes }; // Return the updated attributes
+    } catch (error) {
+        console.error("Error updating item:", error);
+        return { success: false, data: null };
+    }
+};
+
 // Read all Items
 app.get("/history/api/items", async (req, res) => {
     const { success, data } = await readAllItems();
@@ -58,6 +91,17 @@ app.get("/history/api/items", async (req, res) => {
     return res.status(500).json({ success: false, message: "Error" });
 });
 
+// Update Item
+app.post("/history/api/item", async (req, res) => {
+    console.log("Received request:", req.body);  // Log the incoming request body
+
+    const { success, data } = await updateItem(req.body);
+
+    if (success) {
+        return res.json({ success, data });
+    }
+    return res.status(500).json({ success: false, message: 'Error' });
+});
 
 app.get('/slots', (req, res) => {
     const date = req.query.date;

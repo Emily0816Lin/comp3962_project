@@ -104,3 +104,24 @@ function formatDate(selectedDate) {
 document.getElementById("appointmentForm").addEventListener("submit", submitForm);
 
 
+
+
+
+        // Add event listener to the logout button
+        document.querySelector('.logout-btn').addEventListener('click', () => {
+            // Send a request to the server to destroy the session
+            fetch('/logout', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Redirect the user to the main page after successful logout
+                    window.location.href = '/main.html'; // Change '/main.html' to the appropriate main page URL
+                } else {
+                    console.error('Logout failed');
+                }
+            })
+            .catch(error => console.error('Error during logout:', error));
+        });
+
+

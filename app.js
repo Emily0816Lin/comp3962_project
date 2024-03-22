@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require('express');
 var AWS = require("aws-sdk");
 const bodyParser = require('body-parser');
+const session = require('express-session');
 const nodemailer = require('nodemailer');
 const app = express();
 const { CognitoIdentityServiceProvider } = require('aws-sdk'); // Import CognitoIdentityServiceProvider from AWS SDK
@@ -32,6 +33,12 @@ const cognito = new AWS.CognitoIdentityServiceProvider();
 // };
 
 app.use(express.static(__dirname));
+// Session middleware
+app.use(session({
+    secret: process.env.SESSION_KEY, // Change this to a random, secure value
+    resave: false,
+    saveUninitialized: true
+}));
 
 // DynamoDB Operations: Read all Items for history page
 const readAllItems = async () => {
@@ -156,11 +163,12 @@ app.post('/signup', async (req, res) => {
 
         console.log('User signed up successfully:', data);
 
+        req.session.user = { name, email };
         // Redirect the user to the home.html page
         res.redirect('/verification.html');
     } catch (error) {
         console.error('Error signing up user:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        res.status(500).json({ success: false, error: 'Error signing up user: ' + error.message });
     }
 });
 
@@ -183,11 +191,24 @@ app.post('/login', async (req, res) => {
 
         console.log('User authenticated successfully:', data);
 
+        // Fetch user attributes
+        const getUserParams = {
+            AccessToken: data.AuthenticationResult.AccessToken // Access token obtained after authentication
+        };
+
+        const userData = await cognito.getUser(getUserParams).promise();
+
+        // Extract the user's name from the response
+        const name = userData.UserAttributes.find(attr => attr.Name === 'name').Value;
+
+        // Store user information in the session
+        req.session.user = { name, email };
+
         // Redirect the user to the home.html page
         res.redirect('/home.html');
     } catch (error) {
         console.error('Error authenticating user:', error);
-        res.status(401).json({ success: false, error: 'Unauthorized' });
+        res.status(401).json({ success: false, error: 'Error authenticating user: ' + error.message });
     }
 });
 
@@ -290,6 +311,33 @@ app.post('/bookAppointment', async (req, res) => {
         res.status(500).json({ success: false, error: 'Internal Server Error' });
     }
 });
+app.get('/profile', (req, res) => {
+    // Check if user is logged in (i.e., if user information is stored in the session)
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Fetch user information from the session
+    const { name, email } = req.session.user;
+
+    // Now you can use the fetched data as needed
+    res.json({ name, email });
+});
+
+// Logout endpoint
+app.post('/logout', (req, res) => {
+    // Destroy the session
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            res.status(500).json({ success: false, error: 'Internal Server Error' });
+        } else {
+            console.log('Session destroyed');
+            res.sendStatus(200); // Send success response
+        }
+    });
+});
+
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);

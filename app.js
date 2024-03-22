@@ -27,6 +27,8 @@ const ses = new AWS.SES({ apiVersion: "2010-12-01" });
 // Create a new CognitoIdentityServiceProvider object
 const cognito = new AWS.CognitoIdentityServiceProvider();
 
+const ADMIN_EMAIL = 'eschedulerapp@gmail.com';
+
 // var params = {
 //     TableName: "appointment",
     
@@ -87,6 +89,11 @@ const updateItem = async (data = {}) => {
         return { success: false, data: null };
     }
 };
+
+// Endpoint to get admin email
+app.get('/config/admin-email', (req, res) => {
+    res.json({ adminEmail: ADMIN_EMAIL });
+});
 
 // Read all Items
 app.get("/history/api/items", async (req, res) => {

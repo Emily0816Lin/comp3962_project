@@ -1,9 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
-    readAllItems();
+    // readAllItems();
+
+
+    // Fetch profile data first
+    fetch('/profile')
+        .then(response => response.json())
+        .then(data => {
+            // Populate fields
+            // document.getElementById('name').value = data.name;
+            // document.getElementById('email').value = data.email;
+
+            // Now call readAllItems with the fetched name and email
+            readAllItems(data.name, data.email);
+        })
+        .catch(error => console.error('Error fetching user data:', error));
 });
 
+// fetch('/profile')
+//     .then(response => response.json())
+//     .then(data => {
+//         // Populate name field
+//         document.getElementById('name').value = data.name;
+
+//         // Populate email field
+//         document.getElementById('email').value = data.email;
+//     })
+//     .catch(error => console.error('Error fetching user data:', error));
+
+
+
 // Fetch all items from the API
-function readAllItems() {
+// function readAllItems() {
+function readAllItems(userName, userEmail) {
     fetch('/history/api/items')
         .then(response => response.json())
         .then(data => {
@@ -11,41 +39,43 @@ function readAllItems() {
             tableBody.innerHTML = ''; // Clear current table body
 
             data.data.forEach(item => {
-                const row = document.createElement('tr');
-                
-                const dateCell = document.createElement('td');
-                dateCell.appendChild(document.createTextNode(item.date));
-                row.appendChild(dateCell);
-                
-                const timeCell = document.createElement('td');
-                timeCell.appendChild(document.createTextNode(item.time));
-                row.appendChild(timeCell);
-                
-                const statusCell = document.createElement('td');
-                const statusSpan = document.createElement('span');
-                statusSpan.textContent = item.status;
-                statusSpan.className = 'statusStyle'; // Assign a class for styling
+                if (item.name === userName && item.email === userEmail) {
+                    const row = document.createElement('tr');
 
-                // Apply specific class based on the status value
-                if (item.status.toLowerCase() === 'completed') {
-                    statusSpan.classList.add('statusCompleted');
-                } else if (item.status.toLowerCase() === 'coming') {
-                    statusSpan.classList.add('statusComing');
-                }   
-                
-                statusCell.appendChild(statusSpan);
-                row.appendChild(statusCell);
-                
-                // Details cell
-                const detailsCell = document.createElement('td');
-                const viewButton = document.createElement('button');
-                viewButton.classList.add('viewButton');
-                viewButton.textContent = '🔍 View';
-                viewButton.onclick = () => showItemDetails(item); // Set onclick event
-                detailsCell.appendChild(viewButton);
-                row.appendChild(detailsCell);
-                
-                tableBody.appendChild(row);
+                    const dateCell = document.createElement('td');
+                    dateCell.appendChild(document.createTextNode(item.date));
+                    row.appendChild(dateCell);
+
+                    const timeCell = document.createElement('td');
+                    timeCell.appendChild(document.createTextNode(item.time));
+                    row.appendChild(timeCell);
+
+                    const statusCell = document.createElement('td');
+                    const statusSpan = document.createElement('span');
+                    statusSpan.textContent = item.status;
+                    statusSpan.className = 'statusStyle'; // Assign a class for styling
+
+                    // Apply specific class based on the status value
+                    if (item.status.toLowerCase() === 'completed') {
+                        statusSpan.classList.add('statusCompleted');
+                    } else if (item.status.toLowerCase() === 'coming') {
+                        statusSpan.classList.add('statusComing');
+                    }
+
+                    statusCell.appendChild(statusSpan);
+                    row.appendChild(statusCell);
+
+                    // Details cell
+                    const detailsCell = document.createElement('td');
+                    const viewButton = document.createElement('button');
+                    viewButton.classList.add('viewButton');
+                    viewButton.textContent = '🔍 View';
+                    viewButton.onclick = () => showItemDetails(item); // Set onclick event
+                    detailsCell.appendChild(viewButton);
+                    row.appendChild(detailsCell);
+
+                    tableBody.appendChild(row);
+                }
             });
 
         })
@@ -53,7 +83,6 @@ function readAllItems() {
 }
 
 
-// Show details of a specific item
 // Show details of a specific item
 function showItemDetails(item) {
     const historyTable = document.getElementById('historyTable');

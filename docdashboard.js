@@ -1,14 +1,49 @@
+
 document.addEventListener('DOMContentLoaded', () => {
-    const searchButton = document.getElementById('searchButton');
-    const searchInput = document.getElementById('searchInput');
 
-    searchButton.addEventListener('click', () => {
-        const searchTerm = searchInput.value.trim();
-        readAllItems(searchTerm);
-    });
+    // const searchButton = document.getElementById('searchButton');
+    // const searchInput = document.getElementById('searchInput');
 
+    // searchButton.addEventListener('click', () => {
+    //     const searchTerm = searchInput.value.trim();
+    //     readAllItems(searchTerm);
+    // });
 
-    readAllItems();
+    // readAllItems();
+
+    fetch('/profile')
+        .then(response => response.json())
+        .then(data => {
+            fetch('/config/admin-email')
+                .then(response => response.json())
+                .then(config => {
+
+                    // Check if the email matches
+                    if (data.email !== config.adminEmail) {
+                        // Redirect to 404.html if the email doesn't match
+                        window.location.href = '/404.html';
+                    } else {
+                        // Initialize the UI and functionality only if the email matches
+                        const searchButton = document.getElementById('searchButton');
+                        const searchInput = document.getElementById('searchInput');
+
+                        searchButton.addEventListener('click', () => {
+                            const searchTerm = searchInput.value.trim();
+                            readAllItems(searchTerm);
+                        });
+
+                        // Call readAllItems without a search term initially
+                        readAllItems();
+
+                    }
+
+                })
+        })
+        .catch(error => {
+            console.error('Error fetching user data:', error);
+            // Optionally, redirect to 404.html in case of error
+            window.location.href = '404.html';
+        });
 });
 
 // Fetch all items from the API
@@ -33,30 +68,30 @@ function readAllItems(searchTerm = '') {
                     };
                     nameCell.appendChild(nameLink);
                     row.appendChild(nameCell);
-                    
+
                     const dateCell = document.createElement('td');
                     dateCell.appendChild(document.createTextNode(item.date));
                     row.appendChild(dateCell);
-                    
+
                     const timeCell = document.createElement('td');
                     timeCell.appendChild(document.createTextNode(item.time));
                     row.appendChild(timeCell);
-                    
+
                     const statusCell = document.createElement('td');
                     const statusSpan = document.createElement('span');
                     statusSpan.textContent = item.status;
                     statusSpan.className = 'statusStyle'; // Assign a class for styling
-                    
+
                     // Apply specific class based on the status value
                     if (item.status.toLowerCase() === 'completed') {
                         statusSpan.classList.add('statusCompleted');
                     } else if (item.status.toLowerCase() === 'coming') {
                         statusSpan.classList.add('statusComing');
-                    }         
-                    
+                    }
+
                     statusCell.appendChild(statusSpan);
                     row.appendChild(statusCell);
-                    
+
                     // Details cell
                     const detailsCell = document.createElement('td');
                     const viewButton = document.createElement('button');
@@ -65,7 +100,7 @@ function readAllItems(searchTerm = '') {
                     viewButton.onclick = () => showItemDetails(item); // Set onclick event
                     detailsCell.appendChild(viewButton);
                     row.appendChild(detailsCell);
-                    
+
                     tableBody.appendChild(row);
                 }
             });
@@ -109,17 +144,6 @@ function showPatientInfo(item) {
     patientInfo.appendChild(goBackButton);
 }
 
-
-
-
-
-
-
-
-
-
-
-
 function showItemDetails(item) {
     document.getElementById('searchContainer').style.display = 'none'; // Hide the search bar
     document.getElementById('historyTable').style.display = 'none';
@@ -135,33 +159,33 @@ function showItemDetails(item) {
     function createListItem(content, id, editable = false, isDropdown = false) {
         const li = document.createElement('li');
         li.textContent = `${content}: `;
-        
+
         if (!editable || !isDropdown) {
             const span = document.createElement('span');
             span.id = `text_${id}`;
 
-            if (id != 'doctorcomment' && id != 'prescription'){
+            if (id != 'doctorcomment' && id != 'prescription') {
                 span.textContent = item[id];
             }
             li.appendChild(span);
         }
-    
+
         if (editable) {
             if (isDropdown) {
                 const select = document.createElement('select');
                 select.id = `input_${id}`;
                 select.disabled = true; // Initially disable the select
-    
+
                 const optionCompleted = document.createElement('option');
                 optionCompleted.value = 'completed';
                 optionCompleted.textContent = 'Completed';
                 select.appendChild(optionCompleted);
-    
+
                 const optionComing = document.createElement('option');
                 optionComing.value = 'coming';
                 optionComing.textContent = 'Coming';
                 select.appendChild(optionComing);
-    
+
                 select.value = item[id]; // Set the current value
                 li.appendChild(select);
             } else {
@@ -243,31 +267,31 @@ function showItemDetails(item) {
         window.location.reload();
     };
     detailsList.appendChild(goBackButton);
-    
+
 }
 
 function updateItemInDynamoDB(item) {
-        const formData = {
-            name: item.name,  // Ensure the key name is included in the update
-            email: item.email, // Ensure the key email is included in the update
-            doctorcomment: item.doctorcomment,
-            prescription: item.prescription,
-            status: item.status,
-        }
+    const formData = {
+        name: item.name,  // Ensure the key name is included in the update
+        email: item.email, // Ensure the key email is included in the update
+        doctorcomment: item.doctorcomment,
+        prescription: item.prescription,
+        status: item.status,
+    }
 
-        console.log('Updating item:', formData);
+    console.log('Updating item:', formData);
 
-        fetch('/history/api/item', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json', // Correct header for indicating JSON body
-            },
-            body: JSON.stringify(formData), // Adjust to match the expected JSON structure
+    fetch('/history/api/item', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json', // Correct header for indicating JSON body
+        },
+        body: JSON.stringify(formData), // Adjust to match the expected JSON structure
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            // window.location.reload(); // Refresh the page after successful data submission
         })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                // window.location.reload(); // Refresh the page after successful data submission
-            })
-            .catch((error) => console.error('Error:', error));
+        .catch((error) => console.error('Error:', error));
 }
